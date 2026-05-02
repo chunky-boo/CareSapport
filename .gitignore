@@ -1,0 +1,14 @@
+# 機密情報
+kaigo-bot/.env
+
+# Lambdaデプロイ用（大きいので除外）
+kaigo-bot/package/
+kaigo-bot/lambda_deploy.zip
+
+# 不要ファイル
+kaigo_bot_design.md.pdf
+.DS_Store
+.idea/
+__pycache__/
+*.pyc
+.venv/

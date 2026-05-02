@@ -1,0 +1,4 @@
+line-bot-sdk
+anthropic
+boto3
+certifi
