@@ -53,11 +53,15 @@ def get_pending_category(user_id: str) -> str | None:
     return item.get("pendingCategory")
 
 
+_PENDING_CATEGORY_TTL_HOURS = 2
+
+
 def set_pending_category(user_id: str, category: str | None) -> None:
     """次の自由記述メッセージに紐付けるカテゴリを保存・クリアする。"""
     if category is None:
         _table.delete_item(Key={"userId": user_id, "timestamp": _STATE_SK})
     else:
+        ttl = int((datetime.now(timezone.utc) + timedelta(hours=_PENDING_CATEGORY_TTL_HOURS)).timestamp())
         _table.put_item(
-            Item={"userId": user_id, "timestamp": _STATE_SK, "pendingCategory": category}
+            Item={"userId": user_id, "timestamp": _STATE_SK, "pendingCategory": category, "ttl": ttl}
         )

@@ -38,7 +38,7 @@ print("Create:", res.status_code, res.text)
 richmenu_id = res.json()["richMenuId"]
 
 # ② 画像をアップロード
-with open("richmenu_top.jpg", "rb") as f:
+with open("richmenu_top_compressed.jpg", "rb") as f:
     res = requests.post(
         f"https://api-data.line.me/v2/bot/richmenu/{richmenu_id}/content",
         headers={**HEADERS, "Content-Type": "image/jpeg"},
