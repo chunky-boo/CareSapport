@@ -7,7 +7,8 @@ from config import (
 )
 from handlers.menu import handle_top_menu
 from handlers.record import handle_record_prompt, handle_free_record
-from handlers.summary import handle_summary
+from handlers.summary import handle_summary, handle_summary_confirm
+from handlers.consult import handle_consult
 from services.record_store import set_pending_category
 
 
@@ -20,6 +21,11 @@ def route(user_id: str, user_message: str) -> TextMessage:
       2. このファイルにimportとif-blockを1つ追加
       3. トリガーキーワードがあれば config.py に定数を追加
     """
+    # Phase 0: 保留中の確認応答（「はい」「いいえ」）
+    reply = handle_summary_confirm(user_id, user_message)
+    if reply:
+        return reply
+
     # Phase 1: 完全一致（リッチメニュータップ・Quick Reply）
     reply = _dispatch(user_id, user_message)
     if reply:
@@ -47,6 +53,10 @@ def _dispatch(user_id: str, message: str) -> TextMessage | None:
         return reply
 
     reply = handle_summary(user_id, message)
+    if reply:
+        return reply
+
+    reply = handle_consult(user_id, message)
     if reply:
         return reply
 

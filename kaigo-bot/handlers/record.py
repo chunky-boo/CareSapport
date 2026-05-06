@@ -1,11 +1,17 @@
 import anthropic
+from datetime import datetime, timezone, timedelta
 from linebot.v3.messaging import TextMessage
 from config import CATEGORY_PROMPTS
 from services.ai_client import generate
-from services.record_store import save_record, get_pending_category, set_pending_category
+from services.record_store import (
+    save_record,
+    get_pending_category,
+    set_pending_category,
+    get_pending_date,
+    clear_pending_state,
+)
 
 _ERROR_AI = "AIとの通信に失敗しました。しばらくしてから再度お試しください。"
-_ERROR_SAVE = "記録の保存に失敗しましたが、返答は生成できました。"
 
 
 def handle_record_prompt(user_message: str) -> TextMessage | None:
@@ -24,10 +30,17 @@ def handle_free_record(user_id: str, user_message: str) -> TextMessage:
         return TextMessage(text=_ERROR_AI)
 
     category = get_pending_category(user_id)
+    pending_date = get_pending_date(user_id)
+
+    timestamp = None
+    if pending_date:
+        jst = timezone(timedelta(hours=9))
+        dt = datetime.strptime(pending_date, "%Y-%m-%dT%H:%M").replace(tzinfo=jst)
+        timestamp = dt.astimezone(timezone.utc).isoformat()
+
     try:
-        save_record(user_id, user_message, reply_text, category=category)
-        if category:
-            set_pending_category(user_id, None)
+        save_record(user_id, user_message, reply_text, category=category, timestamp=timestamp)
+        clear_pending_state(user_id)
     except Exception as e:
         print(f"[record] save failed: {e}")
 

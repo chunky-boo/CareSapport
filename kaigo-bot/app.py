@@ -9,9 +9,10 @@ from flask import Flask, request, abort
 from linebot.v3.webhook import WebhookHandler
 from linebot.v3.messaging import ApiClient, Configuration, MessagingApi, ReplyMessageRequest
 from linebot.v3.exceptions import InvalidSignatureError
-from linebot.v3.webhooks import MessageEvent, TextMessageContent
+from linebot.v3.webhooks import MessageEvent, TextMessageContent, PostbackEvent
 import config
 from handlers.router import route
+from handlers.postback import handle_postback
 
 app = Flask(__name__)
 configuration = Configuration(access_token=config.LINE_CHANNEL_ACCESS_TOKEN)
@@ -35,6 +36,20 @@ def handle_message(event):
         MessagingApi(api_client).reply_message(
             ReplyMessageRequest(reply_token=event.reply_token, messages=[reply])
         )
+
+
+@handler.add(PostbackEvent)
+def handle_postback_event(event):
+    reply = handle_postback(
+        event.source.user_id,
+        event.postback.data,
+        event.postback.params,
+    )
+    if reply:
+        with ApiClient(configuration) as api_client:
+            MessagingApi(api_client).reply_message(
+                ReplyMessageRequest(reply_token=event.reply_token, messages=[reply])
+            )
 
 
 if __name__ == "__main__":

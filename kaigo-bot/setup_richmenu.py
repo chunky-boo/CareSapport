@@ -9,7 +9,7 @@ HEADERS = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
 
 # ① リッチメニューを作成
 richmenu_data = {
-    "size": {"width": 2500, "height": 843},
+    "size": {"width": 2500, "height": 1686},
     "selected": True,
     "name": "トップメニュー",
     "chatBarText": "メニュー",
@@ -25,6 +25,18 @@ richmenu_data = {
         {
             "bounds": {"x": 1667, "y": 0, "width": 833, "height": 843},
             "action": {"type": "message", "text": "使い方"}
+        },
+        {
+            "bounds": {"x": 0, "y": 843, "width": 833, "height": 843},
+            "action": {"type": "message", "text": "相談文"}
+        },
+        {
+            "bounds": {"x": 833, "y": 843, "width": 834, "height": 843},
+            "action": {"type": "message", "text": "エクスポート"}
+        },
+        {
+            "bounds": {"x": 1667, "y": 843, "width": 833, "height": 843},
+            "action": {"type": "message", "text": "記録を検索"}
         }
     ]
 }
