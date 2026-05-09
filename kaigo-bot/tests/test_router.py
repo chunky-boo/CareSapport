@@ -15,6 +15,7 @@ def test_route_001():
 def test_route_002():
     """Phase 1: 完全一致ハンドラがヒットした場合にその返答が返る"""
     with patch("handlers.router.handle_summary_confirm", return_value=None), \
+         patch("handlers.router.handle_vital_input", return_value=None), \
          patch("handlers.router.handle_top_menu", return_value=_DUMMY_REPLY):
         result = route("user1", "記録")
         assert result.text == "dummy"
@@ -23,6 +24,7 @@ def test_route_002():
 def test_route_003():
     """Phase 2: 部分一致ハンドラがヒットした場合にその返答が返る"""
     with patch("handlers.router.handle_summary_confirm", return_value=None), \
+         patch("handlers.router.handle_vital_input", return_value=None), \
          patch("handlers.router.handle_top_menu", return_value=None), \
          patch("handlers.router.handle_record_prompt", return_value=None), \
          patch("handlers.router.handle_summary", return_value=None), \
@@ -36,10 +38,19 @@ def test_route_003():
 def test_route_004():
     """Phase 3: すべてのフェーズがミスした場合に自由記述フォールバックが返る"""
     with patch("handlers.router.handle_summary_confirm", return_value=None), \
+         patch("handlers.router.handle_vital_input", return_value=None), \
          patch("handlers.router._dispatch", return_value=None), \
          patch("handlers.router._fuzzy_match", return_value=None), \
          patch("handlers.router.handle_free_record", return_value=_DUMMY_REPLY):
         result = route("user1", "お母さん今日元気だった")
+        assert result.text == "dummy"
+
+
+def test_route_005():
+    """Phase 0.5: バイタル入力中にhandle_vital_inputがヒットした場合にその返答が返る"""
+    with patch("handlers.router.handle_summary_confirm", return_value=None), \
+         patch("handlers.router.handle_vital_input", return_value=_DUMMY_REPLY):
+        result = route("user1", "36.5")
         assert result.text == "dummy"
 
 
@@ -87,6 +98,14 @@ def test_dispatch_005():
          patch("handlers.router.handle_consult", return_value=None):
         result = _dispatch("user1", "unknown")
         assert result is None
+
+
+def test_dispatch_006():
+    """「バイタルを記録」でhandle_vital_startが呼ばれる"""
+    with patch("handlers.router.handle_top_menu", return_value=None), \
+         patch("handlers.router.handle_vital_start", return_value=_DUMMY_REPLY):
+        result = _dispatch("user1", "バイタルを記録")
+        assert result.text == "dummy"
 
 
 def test_fuzzy_match_001():

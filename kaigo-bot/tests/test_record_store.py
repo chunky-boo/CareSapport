@@ -7,6 +7,8 @@ from services.record_store import (
     get_pending_summary_start, set_pending_summary_start, clear_pending_summary_start,
     get_pending_summary_confirm, set_pending_summary_confirm, clear_pending_summary_confirm,
     get_pending_export_start, set_pending_export_start, clear_pending_export_start,
+    get_pending_vital_step, set_pending_vital_step,
+    get_pending_vital_data, set_pending_vital_data, clear_pending_vital,
 )
 
 _SAMPLE_RECORDS = [
@@ -239,4 +241,53 @@ def test_clear_pending_export_start_001():
     with patch("services.record_store._table") as mock_table:
         mock_table.get_item.return_value = {"Item": {"pendingExportStart": "2026-05-01"}}
         clear_pending_export_start("user1")
+        mock_table.delete_item.assert_called_once()
+
+
+# --- pendingVital ---
+
+def test_get_pending_vital_step_001():
+    """pendingVitalStepが返る"""
+    with patch("services.record_store._table") as mock_table:
+        mock_table.get_item.return_value = {"Item": {"pendingVitalStep": "temperature"}}
+        assert get_pending_vital_step("user1") == "temperature"
+
+
+def test_set_pending_vital_step_001():
+    """pendingVitalStepをセットするとput_itemが呼ばれる"""
+    with patch("services.record_store._table") as mock_table:
+        mock_table.get_item.return_value = {"Item": {}}
+        set_pending_vital_step("user1", "blood_pressure")
+        mock_table.put_item.assert_called_once()
+
+
+def test_get_pending_vital_data_001():
+    """pendingVitalDataが返る"""
+    with patch("services.record_store._table") as mock_table:
+        mock_table.get_item.return_value = {"Item": {"pendingVitalData": {"temperature": "36.5"}}}
+        assert get_pending_vital_data("user1") == {"temperature": "36.5"}
+
+
+def test_get_pending_vital_data_002():
+    """pendingVitalDataがないとき空dictが返る"""
+    with patch("services.record_store._table") as mock_table:
+        mock_table.get_item.return_value = {"Item": {}}
+        assert get_pending_vital_data("user1") == {}
+
+
+def test_set_pending_vital_data_001():
+    """pendingVitalDataをセットするとput_itemが呼ばれる"""
+    with patch("services.record_store._table") as mock_table:
+        mock_table.get_item.return_value = {"Item": {}}
+        set_pending_vital_data("user1", {"temperature": "36.5"})
+        mock_table.put_item.assert_called_once()
+
+
+def test_clear_pending_vital_001():
+    """pendingVital系キーをすべて削除するとdelete_itemが呼ばれる"""
+    with patch("services.record_store._table") as mock_table:
+        mock_table.get_item.return_value = {
+            "Item": {"pendingVitalStep": "pulse", "pendingVitalData": {"temperature": "36.5"}}
+        }
+        clear_pending_vital("user1")
         mock_table.delete_item.assert_called_once()

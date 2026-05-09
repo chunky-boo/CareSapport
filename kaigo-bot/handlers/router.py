@@ -9,6 +9,7 @@ from handlers.menu import handle_top_menu
 from handlers.record import handle_record_prompt, handle_free_record
 from handlers.summary import handle_summary, handle_summary_confirm
 from handlers.consult import handle_consult
+from handlers.vital import handle_vital_start, handle_vital_input
 from services.record_store import set_pending_category
 
 
@@ -23,6 +24,11 @@ def route(user_id: str, user_message: str) -> TextMessage:
     """
     # Phase 0: 保留中の確認応答（「はい」「いいえ」）
     reply = handle_summary_confirm(user_id, user_message)
+    if reply:
+        return reply
+
+    # Phase 0.5: バイタル入力フロー中（ステートがなければ None が返るだけ）
+    reply = handle_vital_input(user_id, user_message)
     if reply:
         return reply
 
@@ -45,6 +51,9 @@ def _dispatch(user_id: str, message: str) -> TextMessage | None:
     reply = handle_top_menu(message)
     if reply:
         return reply
+
+    if message == "バイタルを記録":
+        return handle_vital_start(user_id)
 
     reply = handle_record_prompt(message)
     if reply:

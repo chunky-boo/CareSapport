@@ -167,3 +167,32 @@ def clear_pending_export_start(user_id: str) -> None:
     state = _get_state(user_id)
     state.pop("pendingExportStart", None)
     _save_state(user_id, state)
+
+
+# --- バイタル入力フロー ---
+
+def get_pending_vital_step(user_id: str) -> str | None:
+    return _get_state(user_id).get("pendingVitalStep")
+
+
+def set_pending_vital_step(user_id: str, step: str) -> None:
+    state = _get_state(user_id)
+    state["pendingVitalStep"] = step
+    _save_state(user_id, state)
+
+
+def get_pending_vital_data(user_id: str) -> dict:
+    return _get_state(user_id).get("pendingVitalData") or {}
+
+
+def set_pending_vital_data(user_id: str, data: dict) -> None:
+    state = _get_state(user_id)
+    state["pendingVitalData"] = data
+    _save_state(user_id, state)
+
+
+def clear_pending_vital(user_id: str) -> None:
+    state = _get_state(user_id)
+    state.pop("pendingVitalStep", None)
+    state.pop("pendingVitalData", None)
+    _save_state(user_id, state)
