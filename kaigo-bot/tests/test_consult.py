@@ -7,6 +7,11 @@ _SAMPLE_RECORDS = [
     {"timestamp": "2026-05-01T00:00:00+00:00", "rawMessage": "熱が出た", "category": "体調"},
 ]
 
+# JST 01:00 (深夜) = UTC 前日 16:00 → [:10] では日付が1日ずれるケース
+_LATE_NIGHT_RECORDS = [
+    {"timestamp": "2026-05-01T16:00:00+00:00", "rawMessage": "深夜に記録", "category": "体調"},  # JST: 2026-05-02T01:00
+]
+
 
 def test_handle_consult_menu_001():
     """期間選択Quick Reply（3件）が返る"""
@@ -55,3 +60,17 @@ def test_handle_consult_005():
         result = handle_consult("user1", "相談文（1ヶ月）")
         assert isinstance(result, TextMessage)
         assert "失敗" in result.text
+
+
+def test_handle_consult_006():
+    """深夜(JST)の記録日付がJSTで正しくプロンプトに渡される（UTC日付でない）"""
+    captured = {}
+    def fake_generate(prompt, **kwargs):
+        captured["prompt"] = prompt
+        return "相談文"
+    with patch("handlers.consult.get_records_since", return_value=_LATE_NIGHT_RECORDS), \
+         patch("handlers.consult.generate", side_effect=fake_generate):
+        handle_consult("user1", "相談文（2週間）")
+    # UTC[:10]="2026-05-01" ではなく JST日付="2026-05-02" が含まれること
+    assert "2026-05-02" in captured["prompt"]
+    assert "2026-05-01" not in captured["prompt"]

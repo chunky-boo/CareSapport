@@ -1,4 +1,5 @@
 import anthropic
+from datetime import datetime, timezone, timedelta
 from linebot.v3.messaging import TextMessage, QuickReply, QuickReplyItem, MessageAction
 from config import CONSULT_PERIOD_MAP, CONSULT_SYSTEM_PROMPT, CONSULT_MAX_TOKENS
 from services.record_store import get_records_since
@@ -6,6 +7,7 @@ from services.ai_client import generate
 
 _ERROR_FETCH = "記録の取得に失敗しました。しばらくしてから再度お試しください。"
 _ERROR_AI = "相談文の生成に失敗しました。しばらくしてから再度お試しください。"
+_JST = timezone(timedelta(hours=9))
 
 
 def handle_consult_menu() -> TextMessage:
@@ -35,7 +37,8 @@ def handle_consult(user_id: str, user_message: str) -> TextMessage | None:
         return TextMessage(text=f"直近{days}日間の記録がありません。")
 
     records_text = "\n".join(
-        f"・{r['timestamp'][:10]}: [{r.get('category', '未分類')}] {r['rawMessage']}" for r in records
+        f"・{datetime.fromisoformat(r['timestamp']).astimezone(_JST).strftime('%Y-%m-%d')}: [{r.get('category', '未分類')}] {r['rawMessage']}"
+        for r in records
     )
     prompt = f"以下は直近{days}日間の介護記録です。医師への相談文を作成してください：\n{records_text}"
 

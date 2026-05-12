@@ -12,6 +12,11 @@ _SAMPLE_RECORDS = [
     {"timestamp": "2026-05-01T00:00:00+00:00", "rawMessage": "熱が出た", "category": "体調"},
 ]
 
+# JST 01:00 (深夜) = UTC 前日 16:00 → [:10] では日付が1日ずれるケース
+_LATE_NIGHT_RECORDS = [
+    {"timestamp": "2026-05-01T16:00:00+00:00", "rawMessage": "深夜に記録"},  # JST: 2026-05-02T01:00
+]
+
 
 def test_build_summary_001():
     """AI生成成功時はサマリーテキストが返る"""
@@ -21,7 +26,20 @@ def test_build_summary_001():
         assert result.text == "今週は体調不良が1回ありました"
 
 
-def test_build_summary_002():
+def test_build_summary_002_jst_date():
+    """深夜(JST)の記録日付がJSTで正しくプロンプトに渡される（UTC日付でない）"""
+    captured = {}
+    def fake_generate(prompt, **kwargs):
+        captured["prompt"] = prompt
+        return "まとめ"
+    with patch("handlers.summary.generate", side_effect=fake_generate):
+        _build_summary(_LATE_NIGHT_RECORDS, "今週")
+    # UTC[:10]="2026-05-01" ではなく JST日付="2026-05-02" が含まれること
+    assert "2026-05-02" in captured["prompt"]
+    assert "2026-05-01" not in captured["prompt"]
+
+
+def test_build_summary_003():
     """AI APIエラー時はエラーメッセージが返る"""
     error = anthropic.APIConnectionError(request=MagicMock())
     with patch("handlers.summary.generate", side_effect=error):

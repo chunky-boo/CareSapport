@@ -1,5 +1,5 @@
 import anthropic
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from linebot.v3.messaging import TextMessage
 from config import PERIOD_MAP, SUMMARY_SYSTEM_PROMPT
 from services.record_store import (
@@ -12,11 +12,13 @@ from services.ai_client import generate
 
 _ERROR_FETCH = "記録の取得に失敗しました。しばらくしてから再度お試しください。"
 _ERROR_AI = "まとめの生成に失敗しました。しばらくしてから再度お試しください。"
+_JST = timezone(timedelta(hours=9))
 
 
 def _build_summary(records: list[dict], period_label: str) -> TextMessage:
     records_text = "\n".join(
-        f"・{r['timestamp'][:10]}: {r['rawMessage']}" for r in records
+        f"・{datetime.fromisoformat(r['timestamp']).astimezone(_JST).strftime('%Y-%m-%d')}: {r['rawMessage']}"
+        for r in records
     )
     prompt = f"以下は{period_label}の介護記録です。やさしくまとめてください：\n{records_text}"
     try:
