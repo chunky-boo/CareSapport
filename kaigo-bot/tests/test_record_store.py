@@ -56,6 +56,19 @@ def test_get_records_by_period_001():
         assert result[0]["rawMessage"] == "熱が出た"
 
 
+def test_get_records_by_period_004():
+    """「今日」の起点がJST 0:00をUTCに変換した値になっている（UTC 0:00でない）"""
+    from services.record_store import _PERIOD_DELTAS
+    from datetime import datetime, timezone
+
+    # 2026-05-13 05:00 UTC = 2026-05-13 14:00 JST（当日）
+    now_utc = datetime(2026, 5, 13, 5, 0, 0, tzinfo=timezone.utc)
+    since = _PERIOD_DELTAS["今日"](now_utc)
+    # JST 2026-05-13T00:00:00+09:00 = UTC 2026-05-12T15:00:00+00:00
+    expected = datetime(2026, 5, 12, 15, 0, 0, tzinfo=timezone.utc)
+    assert since == expected
+
+
 def test_get_records_by_period_002():
     """「今月」の記録が返る"""
     with patch("services.record_store._table") as mock_table:
@@ -90,6 +103,17 @@ def test_get_records_by_date_range_001():
         mock_table.query.return_value = {"Items": _SAMPLE_RECORDS}
         result = get_records_by_date_range("user1", "2026-05-01", "2026-05-31")
         assert len(result) == 1
+
+
+def test_get_records_by_date_range_002():
+    """終了日UTC値がmicrosecond=999999を含む（23:59:59台の記録が漏れない）"""
+    from datetime import datetime, timezone, timedelta
+
+    jst = timezone(timedelta(hours=9))
+    # 終了日の end_dt は JST 23:59:59.999999 → UTC に変換すると .999999 が含まれる
+    end_dt = datetime(2026, 5, 1, 23, 59, 59, 999999, tzinfo=jst)
+    end_utc = end_dt.astimezone(timezone.utc).isoformat()
+    assert ".999999" in end_utc
 
 
 # --- pendingCategory ---

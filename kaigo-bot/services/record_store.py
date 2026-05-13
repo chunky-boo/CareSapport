@@ -8,9 +8,11 @@ _table = _dynamodb.Table(DYNAMODB_TABLE_NAME)
 
 _STATE_SK = "state"
 _STATE_TTL_HOURS = 2
+_JST = timezone(timedelta(hours=9))
 
 _PERIOD_DELTAS = {
-    "今日": lambda now: now.replace(hour=0, minute=0, second=0, microsecond=0),
+    # JST 0:00 を UTC に変換してから比較。UTC midnight だと 09:00 JST 以降しか拾えない
+    "今日": lambda now: now.astimezone(_JST).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc),
     "今週": lambda now: now - timedelta(days=7),
     "今月": lambda now: now - timedelta(days=30),
 }
@@ -56,8 +58,8 @@ def get_records_since(user_id: str, days: int) -> list[dict]:
 
 def get_records_by_date_range(user_id: str, start_date: str, end_date: str) -> list[dict]:
     jst = timezone(timedelta(hours=9))
-    start_dt = datetime.strptime(start_date, "%Y-%m-%d").replace(hour=0, minute=0, second=0, tzinfo=jst)
-    end_dt = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59, tzinfo=jst)
+    start_dt = datetime.strptime(start_date, "%Y-%m-%d").replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=jst)
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59, microsecond=999999, tzinfo=jst)
     response = _table.query(
         KeyConditionExpression=Key("userId").eq(user_id)
         & Key("timestamp").between(
