@@ -36,6 +36,6 @@ def handle_export(user_id: str, start_date: str, end_date: str) -> TextMessage:
 
     start_dt = datetime.strptime(start_date, "%Y-%m-%d")
     end_dt = datetime.strptime(end_date, "%Y-%m-%d")
-    display = f"{start_dt.month}月{start_dt.day}日〜{end_dt.month}月{end_dt.day}日（{len(records)}件）"
+    display = f"{start_dt.year}年{start_dt.month}月{start_dt.day}日〜{end_dt.year}年{end_dt.month}月{end_dt.day}日（{len(records)}件）"
 
     return TextMessage(text=f"📥 {display}の記録をCSVにしました。1時間以内にダウンロードしてください。\n\n{url}")

@@ -48,7 +48,7 @@ def handle_top_menu(user_message: str) -> TextMessage | None:
                     ("📆 今月", "今月のまとめ"),
                 ]).items,
                 QuickReplyItem(action=DatetimePickerAction(
-                    label="🗓 期間指定", data="action=summary_start_date", mode="date"
+                    label="🗓 開始日を選ぶ", data="action=summary_start_date", mode="date"
                 )),
             ]),
         )

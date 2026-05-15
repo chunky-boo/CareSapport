@@ -42,16 +42,17 @@ def get_records_by_period(user_id: str, period: str) -> list[dict]:
     since = since_fn(now)
     response = _table.query(
         KeyConditionExpression=Key("userId").eq(user_id)
-        & Key("timestamp").gte(since.isoformat())
+        & Key("timestamp").between(since.isoformat(), now.isoformat())
     )
     return [r for r in response.get("Items", []) if "rawMessage" in r]
 
 
 def get_records_since(user_id: str, days: int) -> list[dict]:
-    since = datetime.now(timezone.utc) - timedelta(days=days)
+    now = datetime.now(timezone.utc)
+    since = now - timedelta(days=days)
     response = _table.query(
         KeyConditionExpression=Key("userId").eq(user_id)
-        & Key("timestamp").gte(since.isoformat())
+        & Key("timestamp").between(since.isoformat(), now.isoformat())
     )
     return [r for r in response.get("Items", []) if "rawMessage" in r]
 

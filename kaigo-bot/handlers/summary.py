@@ -73,7 +73,7 @@ def handle_summary_range(user_id: str, start_date: str, end_date: str) -> TextMe
 
     start_dt = datetime.strptime(start_date, "%Y-%m-%d")
     end_dt = datetime.strptime(end_date, "%Y-%m-%d")
-    period_label = f"{start_dt.month}月{start_dt.day}日〜{end_dt.month}月{end_dt.day}日"
+    period_label = f"{start_dt.year}年{start_dt.month}月{start_dt.day}日〜{end_dt.year}年{end_dt.month}月{end_dt.day}日"
 
     if not records:
         return TextMessage(text=f"{period_label}の記録はありません。")

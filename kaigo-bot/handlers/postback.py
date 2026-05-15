@@ -35,7 +35,7 @@ def handle_postback(user_id: str, data: str, params) -> TextMessage | None:
             return None
         set_pending_summary_start(user_id, date_str)
         dt = datetime.strptime(date_str, "%Y-%m-%d")
-        display_date = f"{dt.month}月{dt.day}日"
+        display_date = f"{dt.year}年{dt.month}月{dt.day}日"
         return TextMessage(
             text=f"{display_date}から、いつまでのまとめですか？",
             quick_reply=QuickReply(items=[
@@ -62,7 +62,7 @@ def handle_postback(user_id: str, data: str, params) -> TextMessage | None:
             capped_end = start_dt + timedelta(days=365)
             capped_end_str = capped_end.strftime("%Y-%m-%d")
             set_pending_summary_confirm(user_id, start_date, capped_end_str)
-            display = f"{start_dt.month}月{start_dt.day}日〜{capped_end.month}月{capped_end.day}日（1年間）"
+            display = f"{start_dt.year}年{start_dt.month}月{start_dt.day}日〜{capped_end.year}年{capped_end.month}月{capped_end.day}日（1年間）"
             return TextMessage(
                 text=f"1年を超えているため、{display}でのまとめになります。よろしいですか？",
                 quick_reply=QuickReply(items=[
@@ -70,7 +70,15 @@ def handle_postback(user_id: str, data: str, params) -> TextMessage | None:
                     QuickReplyItem(action=MessageAction(label="いいえ", text="いいえ")),
                 ]),
             )
-        return handle_summary_range(user_id, start_date, date_str)
+        set_pending_summary_confirm(user_id, start_date, date_str)
+        display = f"{start_dt.year}年{start_dt.month}月{start_dt.day}日〜{end_dt.year}年{end_dt.month}月{end_dt.day}日"
+        return TextMessage(
+            text=f"{display}のまとめを作成します。よろしいですか？",
+            quick_reply=QuickReply(items=[
+                QuickReplyItem(action=MessageAction(label="はい", text="はい")),
+                QuickReplyItem(action=MessageAction(label="いいえ", text="いいえ")),
+            ]),
+        )
 
     if data == "action=export_start_date":
         date_str = params.date if hasattr(params, "date") else params.get("date")
@@ -78,7 +86,7 @@ def handle_postback(user_id: str, data: str, params) -> TextMessage | None:
             return None
         set_pending_export_start(user_id, date_str)
         dt = datetime.strptime(date_str, "%Y-%m-%d")
-        display_date = f"{dt.month}月{dt.day}日"
+        display_date = f"{dt.year}年{dt.month}月{dt.day}日"
         return TextMessage(
             text=f"{display_date}から、いつまでのCSVを書き出しますか？",
             quick_reply=QuickReply(items=[

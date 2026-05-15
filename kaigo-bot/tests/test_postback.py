@@ -40,11 +40,12 @@ def test_handle_postback_003():
 
 
 def test_handle_postback_004():
-    """summary_start_date: date指定で終了日選択Quick Replyが返る"""
+    """summary_start_date: date指定で年月日入りの終了日選択Quick Replyが返る"""
     with patch("handlers.postback.set_pending_summary_start"):
         params = _params(date="2026-05-01")
         result = handle_postback("user1", "action=summary_start_date", params)
         assert isinstance(result, TextMessage)
+        assert "2026年5月1日" in result.text
         assert "いつまで" in result.text
 
 
@@ -88,14 +89,15 @@ def test_handle_postback_008():
 
 
 def test_handle_postback_009():
-    """summary_end_date: 365日以内のときサマリーが生成される"""
+    """summary_end_date: 365日以内のとき確認ダイアログが返る"""
     with patch("handlers.postback.get_pending_summary_start", return_value="2026-05-01"), \
          patch("handlers.postback.clear_pending_summary_start"), \
-         patch("handlers.postback.handle_summary_range", return_value=TextMessage(text="サマリー")):
+         patch("handlers.postback.set_pending_summary_confirm"):
         params = _params(date="2026-05-31")
         result = handle_postback("user1", "action=summary_end_date", params)
         assert isinstance(result, TextMessage)
-        assert result.text == "サマリー"
+        assert "よろしいですか" in result.text
+        assert result.quick_reply is not None
 
 
 # --- action=export_start_date ---
