@@ -85,6 +85,22 @@ def test_get_records_by_period_003():
         assert result == []
 
 
+def test_get_records_by_period_005():
+    """2ページにまたがる記録がすべて返る（ページネーション）"""
+    page1 = {
+        "Items": [{"userId": "user1", "timestamp": "2026-05-01T00:00:00+00:00", "rawMessage": "A"}],
+        "LastEvaluatedKey": {"userId": "user1", "timestamp": "2026-05-01T00:00:00+00:00"},
+    }
+    page2 = {
+        "Items": [{"userId": "user1", "timestamp": "2026-05-02T00:00:00+00:00", "rawMessage": "B"}],
+    }
+    with patch("services.record_store._table") as mock_table:
+        mock_table.query.side_effect = [page1, page2]
+        result = get_records_by_period("user1", "今週")
+        assert len(result) == 2
+        assert mock_table.query.call_count == 2
+
+
 # --- get_records_since ---
 
 def test_get_records_since_001():

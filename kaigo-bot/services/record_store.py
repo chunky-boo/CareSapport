@@ -18,6 +18,19 @@ _PERIOD_DELTAS = {
 }
 
 
+def _query_all(**kwargs) -> list[dict]:
+    """ページネーションに対応したDynamoDBクエリ。LastEvaluatedKeyがなくなるまで取得する。"""
+    items = []
+    while True:
+        response = _table.query(**kwargs)
+        items.extend(response.get("Items", []))
+        last = response.get("LastEvaluatedKey")
+        if not last:
+            break
+        kwargs["ExclusiveStartKey"] = last
+    return items
+
+
 def save_record(
     user_id: str,
     message: str,
@@ -40,34 +53,35 @@ def get_records_by_period(user_id: str, period: str) -> list[dict]:
     now = datetime.now(timezone.utc)
     since_fn = _PERIOD_DELTAS.get(period, _PERIOD_DELTAS["今週"])
     since = since_fn(now)
-    response = _table.query(
+    items = _query_all(
         KeyConditionExpression=Key("userId").eq(user_id)
-        & Key("timestamp").gte(since.isoformat())
+        & Key("timestamp").between(since.isoformat(), now.isoformat())
     )
-    return [r for r in response.get("Items", []) if "rawMessage" in r]
+    return [r for r in items if "rawMessage" in r]
 
 
 def get_records_since(user_id: str, days: int) -> list[dict]:
-    since = datetime.now(timezone.utc) - timedelta(days=days)
-    response = _table.query(
+    now = datetime.now(timezone.utc)
+    since = now - timedelta(days=days)
+    items = _query_all(
         KeyConditionExpression=Key("userId").eq(user_id)
-        & Key("timestamp").gte(since.isoformat())
+        & Key("timestamp").between(since.isoformat(), now.isoformat())
     )
-    return [r for r in response.get("Items", []) if "rawMessage" in r]
+    return [r for r in items if "rawMessage" in r]
 
 
 def get_records_by_date_range(user_id: str, start_date: str, end_date: str) -> list[dict]:
     jst = timezone(timedelta(hours=9))
     start_dt = datetime.strptime(start_date, "%Y-%m-%d").replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=jst)
     end_dt = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59, microsecond=999999, tzinfo=jst)
-    response = _table.query(
+    items = _query_all(
         KeyConditionExpression=Key("userId").eq(user_id)
         & Key("timestamp").between(
             start_dt.astimezone(timezone.utc).isoformat(),
             end_dt.astimezone(timezone.utc).isoformat(),
         )
     )
-    return [r for r in response.get("Items", []) if "rawMessage" in r]
+    return [r for r in items if "rawMessage" in r]
 
 
 # --- ステート管理（pendingCategory / pendingDate） ---

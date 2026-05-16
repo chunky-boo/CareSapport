@@ -62,6 +62,40 @@ def test_handle_consult_005():
         assert "失敗" in result.text
 
 
+def test_handle_consult_007():
+    """カテゴリなしの記録は「その他」としてプロンプトに渡される"""
+    no_category_record = [{"timestamp": "2026-05-01T00:00:00+00:00", "rawMessage": "記録"}]
+    captured = {}
+    def fake_generate(prompt, **kwargs):
+        captured["prompt"] = prompt
+        return "相談文"
+    with patch("handlers.consult.get_records_since", return_value=no_category_record), \
+         patch("handlers.consult.generate", side_effect=fake_generate):
+        handle_consult("user1", "相談文（2週間）")
+    assert "[その他]" in captured["prompt"]
+    assert "[未分類]" not in captured["prompt"]
+
+
+def test_handle_consult_008():
+    """CONSULT_MAX_RECORDSを超える記録は最新件数に切り詰められる"""
+    from config import CONSULT_MAX_RECORDS
+    from datetime import datetime, timezone, timedelta
+    base = datetime(2025, 1, 1, tzinfo=timezone.utc)
+    many_records = [
+        {"timestamp": (base + timedelta(days=i)).isoformat(), "rawMessage": f"記録{i}", "category": "体調"}
+        for i in range(CONSULT_MAX_RECORDS + 10)
+    ]
+    captured = {}
+    def fake_generate(prompt, **kwargs):
+        captured["prompt"] = prompt
+        return "相談文"
+    with patch("handlers.consult.get_records_since", return_value=many_records), \
+         patch("handlers.consult.generate", side_effect=fake_generate):
+        handle_consult("user1", "相談文（3ヶ月）")
+    # プロンプト内の記録件数がMAX以下であること
+    assert captured["prompt"].count("・") <= CONSULT_MAX_RECORDS
+
+
 def test_handle_consult_006():
     """深夜(JST)の記録日付がJSTで正しくプロンプトに渡される（UTC日付でない）"""
     captured = {}

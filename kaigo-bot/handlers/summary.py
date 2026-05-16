@@ -1,7 +1,7 @@
 import anthropic
 from datetime import datetime, timezone, timedelta
 from linebot.v3.messaging import TextMessage
-from config import PERIOD_MAP, SUMMARY_SYSTEM_PROMPT
+from config import PERIOD_MAP, SUMMARY_SYSTEM_PROMPT, SUMMARY_MAX_RECORDS
 from services.record_store import (
     get_records_by_period,
     get_records_by_date_range,
@@ -60,6 +60,8 @@ def handle_summary_confirm(user_id: str, user_message: str) -> TextMessage | Non
         start_date, end_date = confirm
         clear_pending_summary_confirm(user_id)
         return handle_summary_range(user_id, start_date, end_date)
+    # はい/いいえ以外 → ステートをクリアして通常処理へ戻す
+    clear_pending_summary_confirm(user_id)
     return None
 
 
@@ -73,9 +75,9 @@ def handle_summary_range(user_id: str, start_date: str, end_date: str) -> TextMe
 
     start_dt = datetime.strptime(start_date, "%Y-%m-%d")
     end_dt = datetime.strptime(end_date, "%Y-%m-%d")
-    period_label = f"{start_dt.month}月{start_dt.day}日〜{end_dt.month}月{end_dt.day}日"
+    period_label = f"{start_dt.year}年{start_dt.month}月{start_dt.day}日〜{end_dt.year}年{end_dt.month}月{end_dt.day}日"
 
     if not records:
         return TextMessage(text=f"{period_label}の記録はありません。")
 
-    return _build_summary(records, period_label)
+    return _build_summary(records[-SUMMARY_MAX_RECORDS:], period_label)

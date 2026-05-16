@@ -25,7 +25,7 @@ def handle_search(user_id: str, date_str: str) -> TextMessage:
         return TextMessage(text=_ERROR_FETCH)
 
     dt = datetime.strptime(date_str, "%Y-%m-%d")
-    display_date = f"{dt.month}月{dt.day}日"
+    display_date = f"{dt.year}年{dt.month}月{dt.day}日"
 
     if not records:
         return TextMessage(text=f"{display_date}の記録はありません。")
