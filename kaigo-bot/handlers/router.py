@@ -5,7 +5,7 @@ from config import (
     FUZZY_TOP_MENU,
     SUMMARY_INTENT_KEYWORDS,
 )
-from handlers.menu import handle_top_menu
+from handlers.menu import handle_top_menu, handle_select_year, handle_year_selected
 from handlers.record import handle_record_prompt, handle_free_record
 from handlers.summary import handle_summary, handle_summary_confirm
 from handlers.consult import handle_consult
@@ -51,6 +51,16 @@ def _dispatch(user_id: str, message: str) -> TextMessage | None:
     reply = handle_top_menu(message)
     if reply:
         return reply
+
+    if message == "別の日を記録":
+        return handle_select_year()
+
+    if message.startswith("記録年:"):
+        try:
+            year = int(message.split(":")[1])
+            return handle_year_selected(year)
+        except (ValueError, IndexError):
+            pass
 
     if message == "バイタルを記録":
         return handle_vital_start(user_id)

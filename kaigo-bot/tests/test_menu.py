@@ -1,5 +1,5 @@
 from linebot.v3.messaging import TextMessage, QuickReply
-from handlers.menu import handle_top_menu, make_category_quick_reply, _make_quick_reply
+from handlers.menu import handle_top_menu, make_category_quick_reply, _make_quick_reply, handle_select_year, handle_year_selected
 
 
 def test_handle_top_menu_001():
@@ -64,3 +64,19 @@ def test_make_quick_reply_001():
     result = _make_quick_reply([("ラベルA", "テキストA"), ("ラベルB", "テキストB")])
     assert isinstance(result, QuickReply)
     assert len(result.items) == 2
+
+
+def test_handle_select_year_001():
+    """年選択Quick Replyが4件返る"""
+    result = handle_select_year()
+    assert isinstance(result, TextMessage)
+    assert result.quick_reply is not None
+    assert len(result.quick_reply.items) == 4
+
+
+def test_handle_year_selected_001():
+    """年を指定するとその年のDatetimePickerが返る"""
+    result = handle_year_selected(2025)
+    assert isinstance(result, TextMessage)
+    assert "2025年" in result.text
+    assert result.quick_reply is not None

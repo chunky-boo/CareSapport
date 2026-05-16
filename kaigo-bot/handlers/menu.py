@@ -1,3 +1,4 @@
+from datetime import datetime
 from linebot.v3.messaging import (
     TextMessage,
     QuickReply,
@@ -33,9 +34,7 @@ def handle_top_menu(user_message: str) -> TextMessage | None:
             text="何を記録しますか？",
             quick_reply=QuickReply(items=[
                 *make_category_quick_reply().items,
-                QuickReplyItem(action=DatetimePickerAction(
-                    label="📅 別の日", data="action=select_date", mode="datetime"
-                )),
+                QuickReplyItem(action=MessageAction(label="📅 別の日", text="別の日を記録")),
             ]),
         )
     if user_message == "まとめ":
@@ -64,3 +63,33 @@ def handle_top_menu(user_message: str) -> TextMessage | None:
         from handlers.search import handle_search_menu
         return handle_search_menu()
     return None
+
+
+def handle_select_year() -> TextMessage:
+    current_year = datetime.now().year
+    years = [current_year - 2, current_year - 1, current_year, current_year + 1]
+    def year_label(y: int) -> str:
+        return f"今年({y}年)" if y == current_year else f"{y}年"
+    return TextMessage(
+        text="何年の記録ですか？",
+        quick_reply=QuickReply(items=[
+            QuickReplyItem(action=MessageAction(label=year_label(y), text=f"記録年:{y}"))
+            for y in years
+        ]),
+    )
+
+
+def handle_year_selected(year: int) -> TextMessage:
+    return TextMessage(
+        text=f"{year}年の月日と時間を選んでください",
+        quick_reply=QuickReply(items=[
+            QuickReplyItem(action=DatetimePickerAction(
+                label="📅 日時を選ぶ",
+                data="action=select_date",
+                mode="datetime",
+                min=f"{year}-01-01T00:00",
+                max=f"{year}-12-31T23:59",
+                initial=f"{year}-06-01T12:00",
+            )),
+        ]),
+    )

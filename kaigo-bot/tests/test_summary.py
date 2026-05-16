@@ -107,10 +107,12 @@ def test_handle_summary_confirm_003():
 
 
 def test_handle_summary_confirm_004():
-    """「はい」「いいえ」以外はNoneが返る"""
-    with patch("handlers.summary.get_pending_summary_confirm", return_value=("2026-01-01", "2026-12-31")):
+    """「はい」「いいえ」以外はステートをクリアしてNoneが返る"""
+    with patch("handlers.summary.get_pending_summary_confirm", return_value=("2026-01-01", "2026-12-31")), \
+         patch("handlers.summary.clear_pending_summary_confirm") as mock_clear:
         result = handle_summary_confirm("user1", "わからない")
         assert result is None
+        mock_clear.assert_called_once_with("user1")
 
 
 def test_handle_summary_range_001():

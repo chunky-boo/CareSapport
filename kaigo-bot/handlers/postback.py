@@ -23,7 +23,7 @@ def handle_postback(user_id: str, data: str, params) -> TextMessage | None:
             return None
         set_pending_date(user_id, datetime_str)
         dt = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
-        display_date = f"{dt.month}月{dt.day}日 {dt.hour:02d}:{dt.minute:02d}"
+        display_date = f"{dt.year}年{dt.month}月{dt.day}日 {dt.hour:02d}:{dt.minute:02d}"
         return TextMessage(
             text=f"{display_date}の記録ですね。何を記録しますか？",
             quick_reply=make_category_quick_reply(),
